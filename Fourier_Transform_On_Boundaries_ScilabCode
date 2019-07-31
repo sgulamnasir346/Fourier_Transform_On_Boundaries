@@ -1,0 +1,64 @@
+clc;
+clear;
+xdel(winsid());
+I= imread('C:\Users\Nasir\Desktop\plane.png');
+figure,imshow(I),title("Original Image");
+I=rgb2gray(I);
+I=double(I);
+[M,N]=size(I);
+Inew=zeros(M,N);
+for x=1:M
+    for y=1:N
+        if I(x,y)>220
+            Inew(x,y)=255;
+        end
+     end
+end
+I_new=uint8(Inew);
+figure,imshow(I_new),title("Image after Thresholding");
+f=[-1,-1,-1;-1,8,-1;-1,-1,-1]; //HPF
+E = imfilter(Inew,f);
+E=uint8(E);
+figure,imshow(E),title("Edge of Image");
+co_x=[];
+co_y=[];
+for x=1:M
+    for y=1:N
+        if E(x,y)==255 
+           co_x = [co_x,x];
+           co_y = [co_y,y];
+        end
+     end
+end
+figure,scatter(co_x,co_y,"*"),title("Transmitting Image");
+sk=[co_x+%i*co_y];
+sk_fft=fft(sk);
+
+for t=1:1
+    sk_fft(t)=0;
+end
+//////////////
+sk_ifft=ifft(sk_fft);
+sk_x=real(sk_ifft);
+sk_y=imag(sk_ifft);
+figure,scatter(sk_x,sk_y,"*"),title("Receiving Image");
+sk_xmin=min(sk_x);
+sk_ymin=min(sk_y);
+sk_xmax=max(sk_x);
+sk_ymax=max(sk_y);
+
+sk_xymin=min(sk_xmin,sk_ymin);
+sk_xnew=sk_x+sk_xymin;
+sk_ynew=sk_y+sk_xymin;
+
+sk_xymax=max(sk_xnew,sk_ynew);
+sk_xscaled=round((sk_xnew./(sk_xymax))*M);
+sk_yscaled=round((sk_ynew./(sk_xymax))*N);
+final=zeros(M,N);
+for i=1:199
+    ix=round(sk_x(1,i));
+    iy=round(sk_y(1,i));
+    final(ix,iy)=255;
+end
+figure,imshow(uint8(final));title("fourier descriptor");
+
